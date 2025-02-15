@@ -90,6 +90,7 @@ ArrayList<Tree> trees1, trees2, trees3, trees4, trees5, trees6;
 float FURTHEST_TREE_SCALE = 0.3;
 float CLOSEST_TREE_SCALE = 1;
 int treeMargin = 200;
+PImage skyGradient;
 
 
 // GREEN PALETTE LIGHT TO DARK
@@ -106,6 +107,22 @@ color[] colors = {
 void setup() {
   size(1400, 900);
   frameRate(60);
+  
+  // precompute the sky gradient
+  skyGradient = createImage(width, height, RGB);
+  skyGradient.loadPixels();
+  color topColor = color(#CBE894); 
+  color bottomColor = color(#D7ED9A);
+  int bottomY = 270;
+
+  for (int y = 0; y < height; y++) {
+    float t = map(y, 0, bottomY-1, 0, 1);
+    color c = (t >= 0 && t <= 1) ? lerpColor(topColor, bottomColor, t) : colors[0];
+    for (int x = 0; x < width; x++) {
+      skyGradient.pixels[y * width + x] = c;
+    }
+  }
+  skyGradient.updatePixels();
   
   offsets = new int[] { 0, 0, 0, 0, 0, 0 };
   seeds = new int[] {
@@ -152,7 +169,8 @@ void draw() {
   offsets[4] += velocities[4];
   offsets[5] += velocities[5];
   
-  background(colors[0]);
+  // background image with gradient
+  image(skyGradient, 0, 0);
   
   drawMountainLayer(1, colors[1], offsets[0], seeds[0]);
   drawTreeLayer(trees1, 0);
