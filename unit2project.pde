@@ -1,173 +1,226 @@
-
 // Refernece1 : https://s3-alpha.figma.com/hub/file/2084046592/10f598c6-fa07-4e0f-a6db-966d67521f79-cover.png
 // Reference2 : https://blog.kiprosh.com/content/images/2022/05/parallax-effect-banner-1.gif
 // Reference3 : https://miro.medium.com/v2/resize:fit:1400/0*-pOySD-Yf6yiyInP.jpg
 // Color palette: https://coolors.co/340f33-5c0037-930037-dc3840-fc5237-fe7537-ffe1c9
 
-int offset1, offset2, offset3, offset4, offset5, offset6;
-int v1, v2, v3, v4, v5, v6;
-int seed1, seed2, seed3, seed4, seed5, seed6;
-int stepSize = 20;
+class Tree {
+  int worldX;        
+  float offsetY;    
+  float w, h; 
+  float rotation;   
+  float scaleFactor;
+  color treeColor;
+  int numLayers; 
+  float trunkHeight; 
+  float trunkWidth;
+  float[] layerOffsets; 
+  float[] layerWidths; 
+  float[] layerHeights;
+  
+  
+  Tree(int worldX, float offsetY, float w, float h, float rotation, float scaleFactor, color treeColor) {
+    this.worldX = worldX;
+    this.offsetY = offsetY;
+    this.w = w;
+    this.h = h;
+    this.rotation = rotation;
+    this.scaleFactor = scaleFactor;
+    this.treeColor = treeColor;
+    this.numLayers = int(random(6, 9));
+    
+    this.trunkHeight = h;
+    this.trunkWidth  = w * random(0.15, 0.2);
+    
+    layerOffsets = new float[numLayers];
+    layerWidths  = new float[numLayers];
+    layerHeights = new float[numLayers];
 
-// ORANGE PALLETTE BRIGHT TO DARK
+    // calculate layerOffsets, layerWidths, layerHeights data
+    float canopyTotal = h;  
+    float currentY = 0; 
+
+    float baseHalfWidth = (w * 0.5) * random(0.9, 1.1);  
+    layerWidths[0] = baseHalfWidth;
+    
+    layerHeights[0] = canopyTotal * random(0.25, 0.35);
+    layerOffsets[0] = currentY; 
+    currentY -= layerHeights[0]; 
+    canopyTotal -= layerHeights[0];
+
+    for (int i = 1; i < numLayers; i++) {
+      layerWidths[i] = layerWidths[i - 1] * random(0.6, 0.9);
+      layerHeights[i] = canopyTotal * random(0.25, 0.35);
+      layerOffsets[i] = currentY;
+      currentY -= layerHeights[i];
+      canopyTotal -= layerHeights[i];
+    }
+  }
+  
+
+  void draw(float screenX, float mountainY) {
+    pushMatrix();
+    translate(screenX, mountainY + offsetY * scaleFactor);
+    scale(scaleFactor);
+    rotate(rotation);
+    noStroke();
+    fill(treeColor);
+    
+    // draw triangular trunk
+    triangle(0, -trunkHeight, trunkWidth, 0, -trunkWidth, 0);
+    
+    // draw triangle layers from top to bottom
+    for (int i = 0; i < numLayers; i++) {
+      float bottomY = layerOffsets[i];
+      float topY = bottomY - layerHeights[i];
+      float halfW = layerWidths[i];
+
+      triangle(-halfW, bottomY, halfW, bottomY, 0, topY);
+    }
+    
+    popMatrix();
+  }
+}
+
+
+int[] offsets;
+int[] velocities;
+int[] seeds;
+int terrainStepSize = 15;
+ArrayList<Tree> trees1, trees2, trees3, trees4, trees5, trees6;
+float FURTHEST_TREE_SCALE = 0.3;
+float CLOSEST_TREE_SCALE = 1;
+int treeMargin = 200;
+
+
+// GREEN PALETTE LIGHT TO DARK
 color[] colors = {
-  color(255, 225, 201),    
-  color(254, 117, 55),  
-  color(252, 82, 55), 
-  color(220, 56, 64),
-  color(147, 0, 55),
-  color(92, 0, 55),
-  color(52, 15, 51)
+  color(208, 233, 149),
+  color(85, 152, 111),
+  color(70, 119, 87),
+  color(51, 104, 76),
+  color(18, 63, 60),
+  color(14, 47, 54),
+  color(22, 37, 44),
 };
-
-// ORANGE PALLETTE DARK TO BRIGHT
-//color[] colors = {
-//  color(255, 225, 201),
-//  color(52, 15, 51),
-//  color(92, 0, 55),
-//  color(147, 0, 55),
-//  color(220, 56, 64),
-//  color(252, 82, 55), 
-//  color(254, 117, 55)
-//};
-
 
 void setup() {
   size(1400, 900);
   frameRate(60);
   
-  offset1 = 0;
-  offset2 = 0;
-  offset3 = 0;
-  offset4 = 0;
-  offset5 = 0;
-  offset6 = 0;
-  seed1 = int(random(-5000, 5000));
-  seed2 = int(random(-5000, 5000));
-  seed3 = int(random(-5000, 5000));
-  seed4 = int(random(-5000, 5000));
-  seed5 = int(random(-5000, 5000));
-  seed6 = int(random(-5000, 5000));
-  v1 = 10;
-  v2 = 12;
-  v3 = 14;
-  v4 = 16;
-  v5 = 18;
-  v6 = 20;
-}
-
-void draw() {
-  println(frameRate);
+  offsets = new int[] { 0, 0, 0, 0, 0, 0 };
+  seeds = new int[] {
+    int(random(-5000, 5000)),
+    int(random(-5000, 5000)),
+    int(random(-5000, 5000)),
+    int(random(-5000, 5000)),
+    int(random(-5000, 5000)),
+    int(random(-5000, 5000)),
+  };
+  trees1 = new ArrayList<Tree>();
+  trees2 = new ArrayList<Tree>();
+  trees3 = new ArrayList<Tree>();
+  trees4 = new ArrayList<Tree>();
+  trees5 = new ArrayList<Tree>();
+  trees6 = new ArrayList<Tree>();
+  ArrayList[] treeLists = new ArrayList[] { trees1, trees2, trees3, trees4, trees5, trees6 };
+  velocities = new int[] {
+    2, 4, 6, 8, 10, 12
+  };
   
-  offset1 += v1;
-  offset2 += v2;
-  offset3 += v3;
-  offset4 += v4;
-  offset5 += v5;
-  offset6 += v6;
+  for(int layer = 1; layer <= 6; layer++) {
+    float scaleFactor = map(layer, 1, 6, FURTHEST_TREE_SCALE, CLOSEST_TREE_SCALE);
+    int worldStart = seeds[layer - 1] - treeMargin;
+    int worldEnd = seeds[layer - 1] + width + treeMargin;
+    
+    int x = worldStart;
+    while(x < worldEnd) {
+      float spacing = random(45, 55) * scaleFactor;
+      float treeW = random(70, 80);
+      float treeH = treeW * 1.8;
+      float offsetY = random(30, 40);
+      float rotation = radians(random(-10, 10));
+      treeLists[layer - 1].add(new Tree(x, offsetY, treeW, treeH, rotation, scaleFactor, colors[layer]));
+      x += spacing;
+    }
+  }
+}
+void draw() {
+  offsets[0] += velocities[0];
+  offsets[1] += velocities[1];
+  offsets[2] += velocities[2];
+  offsets[3] += velocities[3];
+  offsets[4] += velocities[4];
+  offsets[5] += velocities[5];
   
   background(colors[0]);
   
-  // layer 1
-  fill(colors[1]);
-  noStroke();
-  beginShape();
-  vertex(0, height);
-  vertex(0, noiseFunction1(0));
-  for(int i = 0; i <= width; i += stepSize) {
-    curveVertex(i, noiseFunction1(i));
-  }
-  vertex(width, noiseFunction1(width));
-  vertex(width, height);
-  endShape();
+  drawMountainLayer(1, colors[1], offsets[0], seeds[0]);
+  drawTreeLayer(trees1, 0);
   
-  // layer 2
-  fill(colors[2]);
-  noStroke();
-  beginShape();
-  vertex(0, height);
-  vertex(0, noiseFunction2(0));
-  for(int i = 0; i <= width; i += stepSize) {
-    curveVertex(i, noiseFunction2(i));
-  }
-  vertex(width, noiseFunction2(width));
-  vertex(width, height);
-  endShape();
+  drawMountainLayer(2, colors[2], offsets[1], seeds[1]);
+  drawTreeLayer(trees2, 1);
   
-  // layer 3
-  fill(colors[3]);
-  noStroke();
-  beginShape();
-  vertex(0, height);
-  vertex(0, noiseFunction3(0));
-  for(int i = 0; i <= width; i += stepSize) {
-    curveVertex(i, noiseFunction3(i));
-  }
-  vertex(width, noiseFunction3(width));
-  vertex(width, height);
-  endShape();
+  drawMountainLayer(3, colors[3], offsets[2], seeds[2]);
+  drawTreeLayer(trees3, 2);
+  
+  drawMountainLayer(4, colors[4], offsets[3], seeds[3]);
+  drawTreeLayer(trees4, 3);
+  
+  drawMountainLayer(5, colors[5], offsets[4], seeds[4]);
+  drawTreeLayer(trees5, 4);
+  
+  drawMountainLayer(6, colors[6], offsets[5], seeds[5]);
+  drawTreeLayer(trees6, 5);
+  
+}
 
-  // layer 4
-  fill(colors[4]);
+void drawTreeLayer(ArrayList<Tree> treeList, int layerIndex) {
+  for(Tree tree : treeList) {
+    int screenX = tree.worldX - (offsets[layerIndex] + seeds[layerIndex]);
+    if (screenX < -treeMargin) {
+      tree.worldX += (width + treeMargin * 2);
+      screenX = tree.worldX - (offsets[layerIndex] + seeds[layerIndex]);
+    }
+    tree.draw(screenX, noiseFunction(layerIndex + 1, screenX, offsets[layerIndex], seeds[layerIndex]));
+  }
+}
+
+void drawMountainLayer(int layerNum, color layerColor, int offset, int seed) {
+  fill(layerColor);
   noStroke();
   beginShape();
   vertex(0, height);
-  vertex(0, noiseFunction4(0));
-  for(int i = 0; i <= width; i += stepSize) {
-    curveVertex(i, noiseFunction4(i));
+  vertex(0, noiseFunction(layerNum, 0, offset, seed));
+  for(int i = 0; i <= width; i += terrainStepSize) {
+    curveVertex(i, noiseFunction(layerNum, i, offset, seed));
   }
-  vertex(width, noiseFunction4(width));
-  vertex(width, height);
-  endShape();
-  
-  // layer 5
-  fill(colors[5]);
-  noStroke();
-  beginShape();
-  vertex(0, height);
-  vertex(0, noiseFunction5(0));
-  for(int i = 0; i <= width; i += stepSize) {
-    curveVertex(i, noiseFunction5(i));
-  }
-  vertex(width, noiseFunction5(width));
-  vertex(width, height);
-  endShape();
-  
-  // layer 6
-  fill(colors[6]);
-  noStroke();
-  beginShape();
-  vertex(0, height);
-  vertex(0, noiseFunction6(0));
-  for(int i = 0; i <= width; i += stepSize + 10) {
-    curveVertex(i, noiseFunction6(i));
-  }
-  vertex(width, noiseFunction6(width));
+  vertex(width, noiseFunction(layerNum, width, offset, seed));
   vertex(width, height);
   endShape();
 }
 
-float noiseFunction1(int x) {
-  return height * (1 - (noise((x+offset1 + seed1)/270f) / 4.3f + noise((x+offset1 + seed1)/600f) / 1.2f + noise((x+offset1 + seed1)/40f) / 20f) * 0.5f) - 440;
+float noiseFunction(int layer, int x, int offset, int seed) {
+  float noiseVal = 0;
+  switch(layer) {
+    case 1: 
+      noiseVal = noise((x+offset + seed)/270f)/4.3 + noise((x+offset + seed)/500f)/1.2;
+      return height * (1 - noiseVal * 0.4) - 470;
+    case 2:
+      noiseVal = noise((x+offset + seed)/290f)/4 + noise((x+offset + seed)/300f)/1.7;
+      return height * (1 - noiseVal * 0.38) - 430;
+    case 3:
+      noiseVal = noise((x+offset + seed)/200f)/4 + noise((x+offset + seed)/250f)/1.7;
+      return height * (1 - noiseVal * 0.27) - 420;
+    case 4:
+      noiseVal = noise((x+offset + seed)/350f)/1.4;
+      return height * (1 - noiseVal * 0.3) - 360;
+    case 5:
+      noiseVal = noise((x+offset + seed)/370f)/1.4;
+      return height * (1 - noiseVal * 0.3) - 260;
+    case 6:
+      noiseVal = noise((x+offset + seed)/420f)/1.5;
+      return height * (1 - noiseVal * 0.4) - 130;
+    default:
+      return 0;
+  }
 }
-float noiseFunction2(int x) {
-  return height * (1 - (noise((x+offset2 + seed2)/290f) / 4f + noise((x+offset2 + seed2)/340f) / 1.7f) * 0.4f) - 420;
-}
-float noiseFunction3(int x) {
-  return height * (1 - (noise((x+offset3 + seed3)/200f) / 4f + noise((x+offset3 + seed3)/280f) / 1.7f) * 0.27f) - 400;
-}
-float noiseFunction4(int x) {
-  return height * (1 - (noise((x+offset4 + seed4)/350f) / 1.4f) * 0.3f) - 320;
-}
-float noiseFunction5(int x) {
-  return height * (1 - (noise((x+offset5 + seed5)/350f) / 1.4f) * 0.3f) - 230;
-}
-float noiseFunction6(int x) {
-  return height * (1 - (noise((x+offset6 + seed6)/400f) / 1.4f) * 0.4f) - 140;
-}
-
-
-void drawTree() {
-  
-}
-
