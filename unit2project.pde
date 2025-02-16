@@ -26,10 +26,10 @@ class Tree {
     this.rotation = rotation;
     this.scaleFactor = scaleFactor;
     this.treeColor = treeColor;
-    this.numLayers = int(random(6, 9));
+    this.numLayers = int(random(4, 9));
     
     this.trunkHeight = h;
-    this.trunkWidth  = w * random(0.15, 0.2);
+    this.trunkWidth  = w * random(0.12, 0.17);
     
     layerOffsets = new float[numLayers];
     layerWidths  = new float[numLayers];
@@ -39,14 +39,13 @@ class Tree {
     float canopyTotal = h;  
     float currentY = 0; 
 
-    float baseHalfWidth = (w * 0.5) * random(0.9, 1.1);  
-    layerWidths[0] = baseHalfWidth;
-    
+    layerWidths[0] = (w * 0.5) * random(0.9, 1.1);
     layerHeights[0] = canopyTotal * random(0.25, 0.35);
     layerOffsets[0] = currentY; 
     currentY -= layerHeights[0]; 
     canopyTotal -= layerHeights[0];
-
+    
+    // each layer gets smaller
     for (int i = 1; i < numLayers; i++) {
       layerWidths[i] = layerWidths[i - 1] * random(0.6, 0.9);
       layerHeights[i] = canopyTotal * random(0.25, 0.35);
@@ -117,9 +116,8 @@ void setup() {
 
   for (int y = 0; y < height; y++) {
     float t = map(y, 0, bottomY-1, 0, 1);
-    color c = (t >= 0 && t <= 1) ? lerpColor(topColor, bottomColor, t) : colors[0];
     for (int x = 0; x < width; x++) {
-      skyGradient.pixels[y * width + x] = c;
+      skyGradient.pixels[y * width + x] = (t >= 0 && t <= 1) ? lerpColor(topColor, bottomColor, t) : bottomColor;
     }
   }
   skyGradient.updatePixels();
@@ -222,7 +220,7 @@ float noiseFunction(int layer, int x, int offset, int seed) {
   switch(layer) {
     case 1: 
       noiseVal = noise((x+offset + seed)/270f)/4.3 + noise((x+offset + seed)/500f)/1.2;
-      return height * (1 - noiseVal * 0.4) - 470;
+      return height * (1 - noiseVal * 0.4) - 480;
     case 2:
       noiseVal = noise((x+offset + seed)/290f)/4 + noise((x+offset + seed)/300f)/1.7;
       return height * (1 - noiseVal * 0.38) - 430;
