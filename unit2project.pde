@@ -64,7 +64,7 @@ class Tree {
     noStroke();
     fill(treeColor);
     
-    // draw triangular trunk
+    // draw trunk
     triangle(0, -trunkHeight, trunkWidth, 0, -trunkWidth, 0);
     
     // draw triangle layers from top to bottom
@@ -80,6 +80,56 @@ class Tree {
   }
 }
 
+class Bird {
+  int x;
+  int y;
+  float speed;
+  float size;
+  color birdColor;
+  float flapSpeed; // in degrees
+  float currentAngle; // in degrees
+  
+  Bird(int x, int y, float speed, float size, color birdColor, float flapSpeed, float currentAngle) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.size = size;
+    this.birdColor = birdColor;
+    this.flapSpeed = flapSpeed;
+    this.currentAngle = currentAngle;
+  }
+  
+  void update() {
+    x += speed;
+    currentAngle += flapSpeed;
+    if(x > width + 20) {
+      x = -100;
+    }
+    if(currentAngle > 50) {
+      flapSpeed = -flapSpeed;
+    }
+    if(currentAngle < -50) {
+      flapSpeed = -flapSpeed;
+    }
+  }
+  
+  void draw() {
+    pushMatrix();
+    translate(x, y);
+    scale(size);
+    stroke(0);
+    strokeWeight(2);
+    fill(birdColor);
+    
+    line(0, 0, cos(radians(currentAngle)) * 10, sin(radians(currentAngle)) * 10);
+    line(0, 0, -cos(radians(currentAngle)) * 10, sin(radians(currentAngle)) * 10);
+    
+    popMatrix();
+    
+  }
+  
+}
+
 
 int[] offsets;
 int[] velocities;
@@ -90,6 +140,7 @@ float FURTHEST_TREE_SCALE = 0.3;
 float CLOSEST_TREE_SCALE = 1;
 int treeMargin = 200;
 PImage skyGradient;
+ArrayList<Bird> birds;
 
 
 // GREEN PALETTE LIGHT TO DARK
@@ -149,7 +200,7 @@ void setup() {
     
     int x = worldStart;
     while(x < worldEnd) {
-      float spacing = random(45, 55) * scaleFactor;
+      float spacing = random(35, 60) * scaleFactor;
       float treeW = random(70, 80);
       float treeH = treeW * 1.8;
       float offsetY = random(30, 40);
@@ -157,6 +208,16 @@ void setup() {
       treeLists[layer - 1].add(new Tree(x, offsetY, treeW, treeH, rotation, scaleFactor, colors[layer]));
       x += spacing;
     }
+  }
+  
+  birds = new ArrayList<Bird>();
+  for(int i = 0; i < 10; i++) {
+    int startX = int(random(-200, width - 100));
+    int startY = int(random(80, 300));
+    float speed = random(5, 6);
+    float size = random(1, 1.8);   
+    float flapSpeed = speed * 2.5;
+    birds.add(new Bird(startX, startY, speed, size, color(0), flapSpeed, int(random(-45, 45))));
   }
 }
 void draw() {
@@ -187,6 +248,13 @@ void draw() {
   
   drawMountainLayer(6, colors[6], offsets[5], seeds[5]);
   drawTreeLayer(trees6, 5);
+  
+  for(Bird bird : birds) {
+    bird.update();
+    bird.draw();
+  }
+  
+  println(frameRate);
   
 }
 
@@ -220,22 +288,22 @@ float noiseFunction(int layer, int x, int offset, int seed) {
   switch(layer) {
     case 1: 
       noiseVal = noise((x+offset + seed)/270f)/4.3 + noise((x+offset + seed)/500f)/1.2;
-      return height * (1 - noiseVal * 0.4) - 480;
+      return height * (1 - noiseVal * 0.5) - 480;
     case 2:
       noiseVal = noise((x+offset + seed)/290f)/4 + noise((x+offset + seed)/300f)/1.7;
-      return height * (1 - noiseVal * 0.38) - 430;
+      return height * (1 - noiseVal * 0.4) - 450;
     case 3:
       noiseVal = noise((x+offset + seed)/200f)/4 + noise((x+offset + seed)/250f)/1.7;
-      return height * (1 - noiseVal * 0.27) - 420;
+      return height * (1 - noiseVal * 0.3) - 420;
     case 4:
-      noiseVal = noise((x+offset + seed)/350f)/1.4;
-      return height * (1 - noiseVal * 0.3) - 360;
+      noiseVal = noise((x+offset + seed)/320f)/1.4;
+      return height * (1 - noiseVal * 0.35) - 360;
     case 5:
-      noiseVal = noise((x+offset + seed)/370f)/1.4;
-      return height * (1 - noiseVal * 0.3) - 260;
+      noiseVal = noise((x+offset + seed)/330f)/1.4;
+      return height * (1 - noiseVal * 0.35) - 260;
     case 6:
       noiseVal = noise((x+offset + seed)/420f)/1.5;
-      return height * (1 - noiseVal * 0.4) - 130;
+      return height * (1 - noiseVal * 0.44) - 130;
     default:
       return 0;
   }
