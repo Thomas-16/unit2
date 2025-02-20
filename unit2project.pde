@@ -246,7 +246,7 @@ void setup() {
       float treeW = random(70, 80);
       float treeH = treeW * 1.8;
       float offsetY = random(30, 40);
-      float rotation = radians(random(-10, 10));
+      float rotation = radians(random(-7, 7));
       treeLists[layer - 1].add(new Tree(x, offsetY, treeW, treeH, rotation, scaleFactor, colors[layer]));
       x += spacing;
     }
