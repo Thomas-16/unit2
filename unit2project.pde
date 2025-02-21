@@ -293,6 +293,7 @@ void draw() {
   drawMountainLayer(1, colors[1], offsets[0], seeds[0]);
   drawTreeLayer(trees1, 0);
   
+  // some birds behind mountains
   for(int i = 0; i < 4; i++) {
     birds.get(i).update();
     birds.get(i).draw();
@@ -313,19 +314,12 @@ void draw() {
   drawMountainLayer(6, colors[6], offsets[5], seeds[5]);
   drawTreeLayer(trees6, 5);
 
+  // birds in front of all mountains
   for(int i = 5; i < birds.size(); i++) {
     birds.get(i).update();
     birds.get(i).draw();
   }
 
-  // birds
-  //for (Bird bird : birds) {
-  //  bird.update();
-  //  bird.draw();
-  //}
-  //stroke(0);
-  //strokeWeight(5);
-  //line(0, 400, width, 400);
 
   println(frameRate);
 }
