@@ -174,14 +174,14 @@ class Cloud {
 int[] offsets;
 int[] velocities;
 int[] seeds;
-int terrainStepSize = 15;
+int terrainStepSize = 10;
 ArrayList<Tree> trees1, trees2, trees3, trees4, trees5, trees6;
 float FURTHEST_TREE_SCALE = 0.3;
 float CLOSEST_TREE_SCALE = 1;
 int treeMargin = 200;
 PImage skyGradient;
 ArrayList<Bird> birds;
-float cloudSpeed = 1;
+float cloudSpeed = 0.7;
 Cloud cloud1, cloud2, cloud3, cloud4;
 
 
@@ -232,7 +232,7 @@ void setup() {
   trees6 = new ArrayList<Tree>();
   ArrayList[] treeLists = new ArrayList[] { trees1, trees2, trees3, trees4, trees5, trees6 };
   velocities = new int[] {
-    3, 5, 7, 9, 11, 13
+    1, 3, 5, 7, 9, 11
   };
 
   for (int layer = 1; layer <= 6; layer++) {
@@ -242,8 +242,9 @@ void setup() {
 
     int x = worldStart;
     while (x < worldEnd) {
-      float spacing = random(35, 60) * scaleFactor;
-      float treeW = random(70, 80);
+      float bigTreeScale = random(1) > 0.92 ? 1.75 : 1;
+      float spacing = random(30, 55) * scaleFactor * bigTreeScale;
+      float treeW = random(70, 80) * bigTreeScale;
       float treeH = treeW * 1.8;
       float offsetY = random(30, 40);
       float rotation = radians(random(-7, 7));
@@ -253,12 +254,12 @@ void setup() {
   }
 
   birds = new ArrayList<Bird>();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 12; i++) {
     int startX = int(random(-200, width - 100));
-    int startY = int(random(80, 300));
-    float speed = random(4.5, 6);
+    int startY = int(random(100, 350));
+    float speed = random(3, 5.5);
     float size = random(1, 1.8);
-    float flapSpeed = speed * 2.6;
+    float flapSpeed = speed * 2.4;
     birds.add(new Bird(startX, startY, speed, size, color(0), flapSpeed, int(random(-45, 45))));
   }
 
@@ -291,6 +292,11 @@ void draw() {
   // mountain layers and trees
   drawMountainLayer(1, colors[1], offsets[0], seeds[0]);
   drawTreeLayer(trees1, 0);
+  
+  for(int i = 0; i < 4; i++) {
+    birds.get(i).update();
+    birds.get(i).draw();
+  }
 
   drawMountainLayer(2, colors[2], offsets[1], seeds[1]);
   drawTreeLayer(trees2, 1);
@@ -307,12 +313,19 @@ void draw() {
   drawMountainLayer(6, colors[6], offsets[5], seeds[5]);
   drawTreeLayer(trees6, 5);
 
+  for(int i = 5; i < birds.size(); i++) {
+    birds.get(i).update();
+    birds.get(i).draw();
+  }
 
   // birds
-  for (Bird bird : birds) {
-    bird.update();
-    bird.draw();
-  }
+  //for (Bird bird : birds) {
+  //  bird.update();
+  //  bird.draw();
+  //}
+  //stroke(0);
+  //strokeWeight(5);
+  //line(0, 400, width, 400);
 
   println(frameRate);
 }
